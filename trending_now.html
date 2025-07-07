@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Trending Now - Live News Feed from NewsData.io and NewsAPI.org">
+  <title>Trending Now</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+    .news-section {
+      padding: 2rem;
+    }
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .news-card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .news-card:hover {
+      transform: translateY(-5px);
+    }
+    .news-card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+    .news-card-content {
+      padding: 1rem;
+    }
+    .news-card-content h3 {
+      font-size: 1.1rem;
+      margin: 0.5rem 0;
+    }
+    .news-card-content p {
+      font-size: 0.9rem;
+      color: #555;
+    }
+    .news-card-content small {
+      display: block;
+      margin-top: 0.5rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <section id="trending-now" class="news-section">
+    <h2>Trending Now</h2>
+    <div id="news-container" class="news-grid"></div>
+  </section>
+
+  <script>
+    const container = document.getElementById('news-container');
+
+    const apis = [
+      {
+        name: 'NewsData.io',
+        url: 'https://newsdata.io/api/1/latest?apikey=pub_81b5bddac60940adac660d37cd5e1f01&q=technology',
+        parse: data => data.results.map(article => ({
+          title: article.title,
+          description: article.description,
+          url: article.link,
+          image: article.image_url || '',
+          source: article.source_id
+        }))
+      },
+      {
+        name: 'NewsAPI.org',
+        url: 'https://newsapi.org/v2/top-headlines?country=in&apiKey=95a336b31e444648a6a280ffc2c62618',
+        parse: data => data.articles.map(article => ({
+          title: article.title,
+          description: article.description,
+          url: article.url,
+          image: article.urlToImage || '',
+          source: article.source.name
+        }))
+      }
+    ];
+
+    async function fetchNews() {
+      container.innerHTML = '';
+      for (const api of apis) {
+        try {
+          const res = await fetch(api.url);
+          const data = await res.json();
+          const articles = api.parse(data);
+          articles.forEach(article => {
+            const card = document.createElement('article');
+            card.className = 'news-card';
+            card.innerHTML = `
+              <img src="${article.image}" alt="${article.title}">
+              <div class="news-card-content">
+                <h3><a href="${article.url}" target="_blank" rel="noopener">${article.title}</a></h3>
+                <p>${article.description || ''}</p>
+                <small>Source: ${article.source}</small>
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        } catch (err) {
+          console.error(`Error fetching from ${api.name}:`, err);
+        }
+      }
+    }
+
+    fetchNews();
+    setInterval(fetchNews, 7200000); // Refresh every 2 hours
+  </script>
+</body>
+</html>
